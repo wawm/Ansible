@@ -1,0 +1,66 @@
+# Simple Playbook to Patch Linux Servers and Upgrade NagiosXI to the latest version
+# Tested on VMware Centos 7.x 
+# Version 1.0
+# wanazlan85@gmail.com
+---
+- name: PLAYBOOK TO PATCH LINUX SERVERS AND UPDATE NAGIOSXI
+  hosts: all
+  tasks:
+  
+    - name: Check core filesystem usage before start
+      assert:
+        that:
+          - not {{ item.mount == '/' and ( item.size_available < item.size_total - ( item.size_total|float * 0.8 ) ) }}
+          - not {{ item.mount == '/var' and ( item.size_available < item.size_total - ( item.size_total|float * 0.8 ) ) }}
+          - not {{ item.mount == '/boot' and ( item.size_available < item.size_total - ( item.size_total|float * 0.8 ) ) }}
+          - not {{ item.mount == '/opt' and ( item.size_available < item.size_total - ( item.size_total|float * 0.8 ) ) }}
+      with_items: '{{ ansible_mounts }}'
+      ignore_errors: yes
+      register: disk_free
+
+    - name: REACHED 80%. NEED MANUAL INTERVENTION
+      fail: msg="Disk Space as Reached 80% Threshold"
+      when: disk_free|failed
+
+    - name: Clearing Cache for YUM.. 
+      command: yum clean all 
+      register: yum_clean_output
+    - debug: msg="{{ yum_clean_output.stdout }}"
+
+    - name: Begin Linux Package Patch..
+      yum:
+        name: '*'
+        state: latest
+        exclude: kernel*
+
+    - name: Begin Kernel Upgrade..
+      package:
+        name: kernel
+        state: latest
+      register: upgraded
+
+    - name: After Patch Reboot..
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
+      when: upgraded is changed
+      register: reboot
+
+    - name: Awaiting server to online.. Please wait..
+      wait_for_connection:
+        connect_timeout: 60
+        sleep: 10
+        delay: 10
+        timeout: 300
+      when: reboot is changed
+
+    - name: Backup NagiosXI..
+      command: /usr/local/nagiosxi/scripts/backup_xi.sh
+      register: backup_output
+    - debug: msg="{{ backup_output.stdout }}"
+    
+    - name: Upgrade NagiosXI..
+      command: wget -O upgrade.sh https://assets.nagios.com/downloads/nagiosxi/upgrade.sh && sh ./upgrade.sh
+      register: update_output
+    - debug: msg="{{ update_output.stdout }}"
+    
