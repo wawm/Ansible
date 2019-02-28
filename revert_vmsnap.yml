@@ -1,0 +1,35 @@
+#Playbook to restore snapshot from snapshot name for multiple serverlist
+#Optimized for Ansible 2.7
+#wanazlan85@gmail.com
+
+---
+ - hosts: localhost
+   vars:
+     vc_hostname:
+     vc_datacenter:
+     vc_username: 
+     vc_password:
+     connection: local
+     gather_facts: false
+     serverlist:
+       - VMNAME-1
+       - VMNAME-2
+
+   tasks:
+
+   - name: Revert to a snapshot
+     vmware_guest_snapshot:
+       hostname: "{{ vc_hostname }}"
+       username: "{{ vc_username }}"
+       password: "{{ vc_password }}"
+       datacenter: "{{ vc_datacenter }}"
+       folder: ""
+       name: "{{ item  }}"
+       validate_certs: no
+       state: revert
+       snapshot_name: testing
+     with_items: "{{ serverlist }}"
+     delegate_to: localhost
+     register: snapguest
+   - debug:
+       msg: "{{ snapguest }}"
