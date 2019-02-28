@@ -1,5 +1,6 @@
 #Find which Folder that a VMwareGuest Resides using vmware_guest_find module
 #Optimized for Ansible 2.7
+#Please install PyVmomi and requests using pip before use
 #wanazlan85@gmail.com
 
 ---
