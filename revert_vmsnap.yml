@@ -1,4 +1,4 @@
-#Playbook to restore snapshot from snapshot name for multiple serverlist
+#Playbook to restore snapshot from snapshot name for multiple servers
 #Optimized for Ansible 2.7
 #wanazlan85@gmail.com
 
