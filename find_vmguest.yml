@@ -1,0 +1,26 @@
+#Find which Folder that a VMwareGuest Resides using vmware_guest_find module
+#Optimized for Ansible 2.7
+#wanazlan85@gmail.com
+
+---
+ - hosts: localhost
+   vars:
+     v_hostname:
+     v_datacenter:
+     v_username:
+     v_password:
+     connection: local
+     gather_facts: false
+
+   tasks:
+     - name: Find the folder for the VM
+       vmware_guest_find:
+         hostname: "{{ v_hostname }}"
+         datacenter: "{{ v_datacenter }}"
+         username: "{{ v_username }}"
+         password: "{{ v_password }}"
+         validate_certs: no
+         name: VMNAMEHERE
+       register: vmfolder
+     - debug:
+         msg: "{{ vmfolder }}"
